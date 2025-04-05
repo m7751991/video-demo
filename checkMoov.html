@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MP4 结构检测器</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .result-box { border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .good { background-color: #e6ffe6; }
+    .bad { background-color: #ffe6e6; }
+    .visual { height: 30px; background: #f0f0f0; margin: 10px 0; position: relative; }
+    .visual-marker { position: absolute; height: 100%; background: #4CAF50; }
+    .visual-text { position: absolute; right: 5px; top: 5px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>MP4 视频结构检测器</h1>
+  <p>上传 MP4 文件检查 moov 原子位置，判断是否适合流式播放</p>
+  
+  <input type="file" id="fileInput" accept="video/mp4">
+  
+  <div id="result" style="display: none;" class="result-box">
+    <h3>分析结果</h3>
+    <div id="resultContent"></div>
+    
+    <div class="visual" id="visualizer">
+      <div class="visual-marker" id="moovMarker"></div>
+      <div class="visual-text" id="visualText"></div>
+    </div>
+  </div>
+  
+  <script>
+    async function checkMoovPosition(file) {
+      // 只读取前 10MB
+      const maxBytes = Math.min(10 * 1024 * 1024, file.size);
+      const buffer = await file.slice(0, maxBytes).arrayBuffer();
+      const uint8Array = new Uint8Array(buffer);
+      
+      let position = 0;
+      const result = {
+        hasHeader: false,
+        moovAtFront: false,
+        moovPosition: -1,
+        moovSize: 0,
+        fileSize: file.size
+      };
+      
+      // 验证文件头
+      if (uint8Array.length > 8) {
+        const signature = String.fromCharCode(
+          uint8Array[4], uint8Array[5], uint8Array[6], uint8Array[7]
+        );
+        result.hasHeader = ['ftyp'].includes(signature);
+      }
+      
+      // 查找 moov 原子
+      while (position < uint8Array.length - 8) {
+        // 读取原子大小
+        const size = (
+          (uint8Array[position] << 24) |
+          (uint8Array[position + 1] << 16) |
+          (uint8Array[position + 2] << 8) |
+          uint8Array[position + 3]
+        );
+        
+        // 读取原子类型
+        const type = String.fromCharCode(
+          uint8Array[position + 4],
+          uint8Array[position + 5],
+          uint8Array[position + 6],
+          uint8Array[position + 7]
+        );
+        
+        console.log(`位置 ${position}: ${type}, 大小 ${size}`);
+        
+        // 如果找到 moov 原子
+        if (type === 'moov') {
+          result.moovPosition = position;
+          result.moovSize = size;
+          
+          // 如果 moov 在文件前 20% 的位置，认为它在文件前部
+          result.moovAtFront = position < (file.size * 0.2);
+          break;
+        }
+        
+        // 如果原子大小为 0 或无效，跳出循环
+        if (size <= 0 || size > maxBytes) break;
+        
+        // 移动到下一个原子
+        position += size;
+      }
+      
+      return result;
+    }
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      const resultDiv = document.getElementById('result');
+      const resultContent = document.getElementById('resultContent');
+      const moovMarker = document.getElementById('moovMarker');
+      const visualText = document.getElementById('visualText');
+      
+      resultDiv.style.display = 'none';
+      
+      if (file && file.type.includes('video/mp4')) {
+        const result = await checkMoovPosition(file);
+        
+        console.log('文件分析结果:', result);
+        
+        let html = '';
+        let resultClass = '';
+        
+        if (result.moovPosition !== -1) {
+          const percentPosition = (result.moovPosition / result.fileSize * 100).toFixed(2);
+          const readableSize = (result.moovSize / 1024 / 1024).toFixed(2);
+          
+          html = `
+            <p>文件大小: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            <p>找到 moov 原子在文件的 ${percentPosition}% 位置</p>
+            <p>moov 原子大小: ${readableSize} MB</p>
+          `;
+          
+          if (result.moovAtFront) {
+            html += '<p><strong>✅ 好消息: moov 原子在文件前部，适合流式播放</strong></p>';
+            resultClass = 'good';
+          } else {
+            html += '<p><strong>⚠️ 注意: moov 原子在文件后部，不适合流式播放</strong></p>';
+            resultClass = 'bad';
+          }
+          
+          // 设置可视化标记
+          moovMarker.style.width = `${percentPosition}%`;
+          visualText.textContent = `${percentPosition}%`;
+        } else {
+          html = '<p><strong>❌ 警告: 未找到 moov 原子，可能不是标准 MP4 文件</strong></p>';
+          resultClass = 'bad';
+          moovMarker.style.width = '0%';
+          visualText.textContent = 'moov 未找到';
+        }
+        
+        resultContent.innerHTML = html;
+        resultDiv.className = `result-box ${resultClass}`;
+        resultDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
