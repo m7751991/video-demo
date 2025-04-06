@@ -110,10 +110,13 @@ class HLSVideoPlayer {
         // 监听媒体附加事件
         hls.loadSource(hlsUrl);
         hls.on(this.Hls.Events.MEDIA_ATTACHED, function (event, data) {
-          console.log("媒体元素已附加，加载源");
+          // console.log("媒体元素已附加，加载源");
         });
         hls.on(this.Hls.Events.BUFFER_APPENDING, function (event, data) {
           // console.log("BUFFER_APPENDING", data);
+        });
+        hls.on(this.Hls.Events.FRAG_CHANGED, function (event, data) {
+          // console.log("FRAG_CHANGED", data);
         });
         hls.on(this.Hls.Events.BUFFER_FLUSHING, function (event, data) {
           // console.log("BUFFER_FLUSHING", data);
@@ -122,7 +125,7 @@ class HLSVideoPlayer {
         player = { type: "hlsjs", instance: hls };
         // 设置事件处理
         hls.on(this.Hls.Events.MANIFEST_PARSED, () => {
-          console.log("HLS 清单解析完成");
+          // console.log("HLS 清单解析完成");
           // if (autoplay) {
           //   this.playWithRetry(videoElement);
           // }

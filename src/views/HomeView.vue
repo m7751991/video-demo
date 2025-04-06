@@ -15,15 +15,15 @@ import { useGestureControl } from "../hooks/useGestureControl";
 // 将常量提取出来
 const POOL_SIZE = 3;
 const realData = ref([
-  "http://www.goldbeancat.com/video/hls_output/o-1/o-1.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-1/op-1.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-2/op-2.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-3/op-3.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-4/op-4.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-5/op-5.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-6/op-6.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-7/op-7.m3u8",
-  "http://www.goldbeancat.com/video/hls_output/op-8/op-8.m3u8",
+  "//www.goldbeancat.com/video/hls_output/o-1/o-1.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-1/op-1.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-2/op-2.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-3/op-3.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-4/op-4.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-5/op-5.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-6/op-6.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-7/op-7.m3u8",
+  "//www.goldbeancat.com/video/hls_output/op-8/op-8.m3u8",
 ]);
 const videoListWrap = ref(null);
 const videoPlayer = ref(null);
